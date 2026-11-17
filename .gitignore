@@ -1,8 +1,25 @@
+# Node
 node_modules/
 dist/
+
+# Python
 __pycache__/
-*.pyc
-db.sqlite3
+*.py[cod]
+.venv/
+venv/
+backend/.venv/
+
+# Environment secrets
 .env
+.env.*
+!.env.example
+backend/.env
+frontend/.env.local
+
+# Databases and generated files
+*.sqlite3
 media/
 staticfiles/
+
+# Other private files
+.neon
