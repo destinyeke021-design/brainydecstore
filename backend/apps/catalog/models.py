@@ -82,8 +82,25 @@ class Product(models.Model):
         super().save(*a, **kw)
 
     def active_flash_sale(self, now=None):
+        # Use the prefetched flash sales when available.
+        # This avoids a separate database query for every product.
+        if now is None:
+            cached_sales = getattr(
+                self,
+                "active_flash_sales_cached",
+                None,
+            )
+
+            if cached_sales is not None:
+                return cached_sales[0] if cached_sales else None
+
         now = now or timezone.now()
-        return self.flash_sales.filter(is_active=True, starts_at__lte=now, ends_at__gt=now).order_by("sale_price").first()
+
+        return self.flash_sales.filter(
+            is_active=True,
+            starts_at__lte=now,
+            ends_at__gt=now,
+        ).order_by("sale_price").first()
 
     def current_price(self, now=None):
         """Backend-authoritative price: flash sale > discounted price > regular price."""

@@ -2,17 +2,33 @@
 import csv
 import io
 
+from django.core.cache import cache
 from django.db import transaction
-from django.db.models import F, Q
+from django.db.models import F, Q, Prefetch
 from django.http import HttpResponse
-from rest_framework import filters, permissions, status, viewsets
+from django.utils import timezone
+
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.models import audit
 from apps.accounts.permissions import IsStoreStaff, ReadOnlyOrStoreStaff
+
+from apps.promotions.models import (
+    Banner,
+    FlashSale,
+    SponsoredAd,
+)
+from apps.promotions.serializers import (
+    BannerSerializer,
+    FlashSaleSerializer,
+    SponsoredAdSerializer,
+)
+
 from .models import (
     Brand,
     Category,
@@ -37,6 +53,110 @@ from .serializers import (
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
+
+class HomepageView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        cache_key = "bd_store_homepage_v1"
+        cached = cache.get(cache_key)
+
+        if cached is not None:
+            return Response(cached)
+
+        now = timezone.now()
+
+        def products(collection):
+            active_sales = FlashSale.objects.filter(
+                is_active=True,
+                starts_at__lte=now,
+                ends_at__gt=now,
+            ).order_by("sale_price")
+
+            qs = Product.objects.filter(
+                status=ProductStatus.ACTIVE,
+                category__is_active=True,
+            ).select_related(
+                "category", "brand"
+            ).prefetch_related(
+                "images",
+                Prefetch(
+                    "flash_sales",
+                    queryset=active_sales,
+                    to_attr="active_flash_sales_cached",
+                ),
+            )
+
+            if collection == "featured":
+                qs = qs.filter(is_featured=True).order_by("-created_at")
+            elif collection == "newest":
+                qs = qs.order_by("-created_at")
+            elif collection == "popular":
+                qs = qs.order_by("-sales_count")
+            elif collection == "on_sale":
+                qs = qs.filter(
+                    discounted_price__isnull=False,
+                    discounted_price__lt=F("regular_price"),
+                ).order_by("-created_at")
+
+            return PublicProductSerializer(
+                qs[:5],
+                many=True,
+                context={"request": request},
+            ).data
+
+        banners = Banner.objects.filter(
+            is_active=True,
+            starts_at__lte=now,
+        ).filter(
+            Q(ends_at__isnull=True) | Q(ends_at__gt=now)
+        ).order_by("position")
+
+        sponsored = SponsoredAd.objects.filter(
+            is_active=True,
+            payment_status="paid",
+            approval_status="approved",
+            placement="homepage",
+            starts_at__lte=now,
+            ends_at__gt=now,
+        ).order_by("-created_at")
+
+        flash_sales = FlashSale.objects.filter(
+            is_active=True,
+            starts_at__lte=now,
+            ends_at__gt=now,
+            product__status=ProductStatus.ACTIVE,
+        ).select_related(
+            "product"
+        ).order_by("ends_at")[:3]
+
+        data = {
+            "featured": products("featured"),
+            "newest": products("newest"),
+            "popular": products("popular"),
+            "on_sale": products("on_sale"),
+            "banners": BannerSerializer(
+                banners,
+                many=True,
+                context={"request": request},
+            ).data,
+            "sponsored": SponsoredAdSerializer(
+                sponsored,
+                many=True,
+                context={"request": request},
+            ).data,
+            "flash": FlashSaleSerializer(
+                flash_sales,
+                many=True,
+                context={"request": request},
+            ).data,
+        }
+
+        cache.set(cache_key, data, 30)
+
+        return Response(data)
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -67,17 +187,26 @@ class ProductViewSet(viewsets.ModelViewSet):
         )
 
     def get_queryset(self):
+        now = timezone.now()
+
+        active_sales = FlashSale.objects.filter(
+            is_active=True,
+            starts_at__lte=now,
+            ends_at__gt=now,
+        ).order_by("sale_price")
+
         qs = Product.objects.select_related(
             "category", "brand"
-        ).prefetch_related("images", "variants", "specifications")
-
-        u = self.request.user
-
-        if not (u.is_authenticated and u.is_store_staff):
-            qs = qs.filter(
-                status=ProductStatus.ACTIVE,
-                category__is_active=True,
-            )
+        ).prefetch_related(
+            "images",
+            "variants",
+            "specifications",
+            Prefetch(
+                "flash_sales",
+                queryset=active_sales,
+                to_attr="active_flash_sales_cached",
+            ),
+        )
 
         p = self.request.query_params
 
@@ -452,4 +581,3 @@ class StockMovementList(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsStoreStaff]
     serializer_class = StockMovementSerializer
     queryset = StockMovement.objects.select_related("product")
-
