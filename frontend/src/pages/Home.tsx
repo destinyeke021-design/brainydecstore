@@ -16,11 +16,16 @@ function Row({ title, params }: { title: string; params: string }) {
   if (!data?.length) return null;
 
   return (
-    <section className="mt-10">
-      <div className="mb-3 flex items-end justify-between">
-        <h2 className="text-lg font-semibold">{title}</h2>
-        <Link className="text-sm text-brand" to={`/products?${params}`}>
-          View all
+    <section className="mt-12">
+      <div className="mb-5 flex items-center justify-between border-b border-slate-200 pb-3">
+        <h2 className="text-xl font-bold tracking-tight text-slate-900">
+          {title}
+        </h2>
+        <Link
+          className="text-sm font-semibold text-blue-700 transition hover:text-blue-900"
+          to={`/products?${params}`}
+        >
+          View all →
         </Link>
       </div>
 
@@ -52,29 +57,50 @@ export default function Home() {
   const b = banners.data?.[0];
 
   return (
-    <div>
+    <div className="space-y-2">
       {/* Main store banner */}
-      <section className="rounded-2xl bg-gradient-to-r from-stone-900 to-stone-700 p-8 text-white md:p-14">
-        <h1 className="text-3xl font-bold md:text-4xl">
-          {b?.title ?? "Everything you need, delivered."}
-        </h1>
+      <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-blue-950 via-slate-950 to-slate-900 px-6 py-12 text-white shadow-xl md:px-14 md:py-16">
+        <div className="absolute -right-16 -top-20 -z-10 h-72 w-72 rounded-full bg-blue-600/20 blur-3xl" />
+        <div className="absolute -bottom-24 right-1/4 -z-10 h-64 w-64 rounded-full bg-blue-400/10 blur-3xl" />
 
-        <p className="mt-2 max-w-xl text-stone-300">
-          {b?.subtitle ??
-            "Shop phones, fashion, home essentials and more at honest prices."}
-        </p>
+        <div className="max-w-2xl">
+          <span className="inline-flex rounded-full border border-blue-400/30 bg-blue-400/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-blue-300">
+            Welcome to BD Store
+          </span>
 
-        <Link to={b?.link || "/products"} className="btn-primary mt-5">
-          Shop now
-        </Link>
+          <h1 className="mt-5 text-3xl font-extrabold leading-tight tracking-tight md:text-5xl">
+            {b?.title ?? "Everything you need, delivered."}
+          </h1>
+
+          <p className="mt-4 max-w-xl text-sm leading-7 text-slate-300 md:text-base">
+            {b?.subtitle ??
+              "Shop phones, fashion, home essentials and more at honest prices. Discover great deals and enjoy convenient shopping."}
+          </p>
+
+          <Link
+            to={b?.link || "/products"}
+            className="mt-7 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-950/30 transition hover:-translate-y-0.5 hover:bg-blue-700"
+          >
+            Shop now
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
       </section>
 
       {/* Sponsored advertisements */}
       {sponsored.data?.length > 0 && (
-        <section className="mt-10">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Sponsored</h2>
-            <span className="text-xs text-stone-500">
+        <section className="mt-12">
+          <div className="mb-5 flex items-center justify-between border-b border-slate-200 pb-3">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Sponsored
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Offers from our advertising partners
+              </p>
+            </div>
+
+            <span className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
               Paid advertisement
             </span>
           </div>
@@ -82,7 +108,7 @@ export default function Home() {
           <div className="grid gap-5 md:grid-cols-2">
             {sponsored.data.map((ad: any) => {
               const content = (
-                <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white transition hover:shadow-md">
+                <div className="h-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-lg">
                   {ad.image && (
                     <img
                       src={ad.image}
@@ -92,23 +118,23 @@ export default function Home() {
                     />
                   )}
 
-                  <div className="p-4">
-                    <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand">
+                  <div className="p-5">
+                    <div className="mb-3 text-xs font-bold uppercase tracking-wide text-blue-700">
                       Sponsored · {ad.advertiser_name}
                     </div>
 
-                    <h3 className="text-lg font-semibold text-stone-900">
+                    <h3 className="text-lg font-bold text-slate-900">
                       {ad.title}
                     </h3>
 
                     {ad.description && (
-                      <p className="mt-1 text-sm text-stone-600">
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
                         {ad.description}
                       </p>
                     )}
 
                     {ad.destination_url && (
-                      <span className="mt-3 inline-block text-sm font-semibold text-brand">
+                      <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-blue-700">
                         Learn more →
                       </span>
                     )}
@@ -122,6 +148,7 @@ export default function Home() {
                   href={ad.destination_url}
                   target="_blank"
                   rel="noopener noreferrer sponsored"
+                  className="block"
                 >
                   {content}
                 </a>
@@ -135,39 +162,65 @@ export default function Home() {
 
       {/* Flash sales */}
       {flash.data?.length > 0 && (
-        <section className="mt-10">
-          <h2 className="mb-3 text-lg font-semibold">Flash sales</h2>
+        <section className="mt-12">
+          <div className="mb-5 flex items-center justify-between border-b border-slate-200 pb-3">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Flash sales
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Limited-time deals. Shop before they end.
+              </p>
+            </div>
 
-          <div className="grid gap-3 md:grid-cols-3">
+            <span className="rounded-full bg-blue-100 px-3 py-1.5 text-xs font-bold text-blue-800">
+              Limited offers
+            </span>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
             {flash.data.slice(0, 3).map((f: any) => (
               <Link
                 key={f.id}
                 to={`/products/${f.product_slug}`}
-                className="card hover:border-brand"
+                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg"
               >
-                <div className="text-sm font-medium">{f.product_name}</div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="text-sm font-bold text-slate-900 transition group-hover:text-blue-700">
+                    {f.product_name}
+                  </div>
 
-                <div className="mt-1">
-                  <span className="font-semibold">
+                  <span className="shrink-0 rounded-lg bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">
+                    SALE
+                  </span>
+                </div>
+
+                <div className="mt-3 flex items-center gap-2">
+                  <span className="text-lg font-extrabold text-blue-700">
                     {money(f.sale_price)}
                   </span>
-                  {" "}
-                  <span className="text-xs text-stone-400 line-through">
+                  <span className="text-xs text-slate-400 line-through">
                     {money(f.regular_price)}
                   </span>
                 </div>
 
-                <Countdown endsAt={f.ends_at} />
+                <div className="mt-4 border-t border-slate-100 pt-3">
+                  <p className="mb-2 text-xs font-semibold text-slate-500">
+                    Offer ends in
+                  </p>
+                  <Countdown endsAt={f.ends_at} />
+                </div>
               </Link>
             ))}
           </div>
         </section>
       )}
 
-      <Row title="Featured" params="featured=1" />
+      {/* Product collections */}
+      <Row title="Featured products" params="featured=1" />
       <Row title="New arrivals" params="sort=newest" />
       <Row title="Best sellers" params="sort=popular" />
-      <Row title="Deals" params="on_sale=1" />
+      <Row title="Today's deals" params="on_sale=1" />
     </div>
   );
 }

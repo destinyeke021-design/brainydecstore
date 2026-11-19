@@ -13,7 +13,7 @@ export default function Admin() {
   const tabs = TABS.filter((t) => user?.role === "super_admin" || !SUPER_ONLY.includes(t));
   return (
     <div className="grid gap-6 md:grid-cols-[180px_1fr]">
-      <nav className="card flex h-fit gap-1 overflow-x-auto md:flex-col">{tabs.map((t) => <button key={t} onClick={() => setTab(t)} className={`whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm ${tab === t ? "bg-brand text-white" : "hover:bg-stone-100"}`}>{t}</button>)}</nav>
+      <nav className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm flex h-fit gap-1 overflow-x-auto md:flex-col">{tabs.map((t) => <button key={t} onClick={() => setTab(t)} className={`whitespace-nowrap rounded-lg px-3 py-2 text-left text-sm ${tab === t ? "bg-blue-600 text-white" : "hover:bg-stone-100"}`}>{t}</button>)}</nav>
       <div className="min-w-0">{tab === "Dashboard" && <Dashboard />}{tab === "Products" && <ProductsAdmin />}{tab === "Orders" && <OrdersAdmin />}{tab === "Payments" && <PaymentsAdmin />}
         {tab === "Refunds" && <RefundsAdmin />}{tab === "Deliveries" && <DeliveriesAdmin />}{tab === "Coupons" && <CouponsAdmin />}{tab === "Flash sales" && <FlashAdmin />}
         {tab === "Reviews" && <Empty>Moderate reviews via POST /api/reviews/&lt;id&gt;/moderate/ (UI list pending).</Empty>}
@@ -22,7 +22,7 @@ export default function Admin() {
   );
 }
 
-const Stat = ({ l, v }: { l: string; v: string | number }) => <div className="card"><div className="text-xs text-stone-500">{l}</div><div className="text-xl font-semibold">{v}</div></div>;
+const Stat = ({ l, v }: { l: string; v: string | number }) => <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="text-xs text-slate-500">{l}</div><div className="text-xl font-semibold">{v}</div></div>;
 
 function Dashboard() {
   const { data: d, isLoading, error } = useQuery({ queryKey: ["dash"], queryFn: async () => (await api.get("/analytics/dashboard/")).data });
@@ -36,11 +36,11 @@ function Dashboard() {
         <Stat l="New customers (30d)" v={d.new_customers} /><Stat l="Products" v={d.total_products} /><Stat l="Low stock" v={d.low_stock_products} /><Stat l="Out of stock" v={d.out_of_stock_products} />
         <Stat l="Pending payments" v={d.pending_payments} /><Stat l="Refund requests" v={d.refund_requests} />
       </div>
-      <div className="card"><div className="mb-2 font-semibold">Sales — last 30 days</div>
-        {!d.sales_over_time.length ? <Empty>No sales yet.</Empty> : <div className="flex h-40 items-end gap-1">{d.sales_over_time.map((s: any) => <div key={s.d} title={`${s.d}: ${money(s.total)}`} className="flex-1 rounded-t bg-brand" style={{ height: `${(s.total / max) * 100}%` }} />)}</div>}</div>
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="mb-2 font-semibold">Sales — last 30 days</div>
+        {!d.sales_over_time.length ? <Empty>No sales yet.</Empty> : <div className="flex h-40 items-end gap-1">{d.sales_over_time.map((s: any) => <div key={s.d} title={`${s.d}: ${money(s.total)}`} className="flex-1 rounded-t bg-blue-600" style={{ height: `${(s.total / max) * 100}%` }} />)}</div>}</div>
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="card"><div className="mb-2 font-semibold">Best sellers</div>{d.best_sellers.map((b: any) => <div key={b.name} className="flex justify-between text-sm"><span>{b.name}</span><span>{b.units}</span></div>)}</div>
-        <div className="card"><div className="mb-2 font-semibold">Payment methods</div>{d.payment_methods.map((b: any) => <div key={b.payment_method} className="flex justify-between text-sm"><span>{b.payment_method}</span><span>{b.count}</span></div>)}</div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="mb-2 font-semibold">Best sellers</div>{d.best_sellers.map((b: any) => <div key={b.name} className="flex justify-between text-sm"><span>{b.name}</span><span>{b.units}</span></div>)}</div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div className="mb-2 font-semibold">Payment methods</div>{d.payment_methods.map((b: any) => <div key={b.payment_method} className="flex justify-between text-sm"><span>{b.payment_method}</span><span>{b.count}</span></div>)}</div>
       </div>
     </div>
   );
@@ -119,7 +119,7 @@ function ProductsAdmin() {
     <div className="space-y-4">
       {msg && <Success>{msg}</Success>}
 
-      <form onSubmit={create} className="card grid gap-2 md:grid-cols-6">
+      <form onSubmit={create} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm grid gap-2 md:grid-cols-6">
         <input
           required
           className="input md:col-span-2"
@@ -208,7 +208,7 @@ function ProductsAdmin() {
         </button>
       </div>
 
-      <div className="card overflow-x-auto">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm overflow-x-auto">
         <table className="w-full">
           <thead>
             <tr>
@@ -237,7 +237,7 @@ function ProductsAdmin() {
 
                 <td className="table-td space-x-2">
                   <button
-                    className="text-brand"
+                    className="text-blue-600"
                     onClick={async () => {
                       const q = prompt("Stock change (+/-)");
                       if (!q) return;
@@ -256,7 +256,7 @@ function ProductsAdmin() {
                     Stock
                   </button>
 
-                  <label className="cursor-pointer text-brand">
+                  <label className="cursor-pointer text-blue-600">
                     Image
                     <input
                       hidden
@@ -318,7 +318,7 @@ function OrdersAdmin() {
   return (
     <div className="space-y-3">{err && <ErrorBox msg={err} />}
       <select className="input w-56" value={status} onChange={(e) => setStatus(e.target.value)}><option value="">All statuses</option>{["pending_payment", "payment_verification", "confirmed", "processing", "ready_for_dispatch", "shipped", "out_for_delivery", "delivered", "cancelled", "refund_requested", "refunded"].map((s) => <option key={s}>{s}</option>)}</select>
-      <div className="card overflow-x-auto"><table className="w-full"><thead><tr>{["Order", "Customer", "Total", "Method", "Status", "Move to"].map((h) => <th key={h} className="table-th">{h}</th>)}</tr></thead>
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm overflow-x-auto"><table className="w-full"><thead><tr>{["Order", "Customer", "Total", "Method", "Status", "Move to"].map((h) => <th key={h} className="table-th">{h}</th>)}</tr></thead>
         <tbody>{data.map((o: any) => <tr key={o.id} className="border-t"><td className="table-td">{o.number}</td><td className="table-td">{o.customer_email}</td><td className="table-td">{money(o.total)}</td><td className="table-td">{o.payment_method}</td><td className="table-td"><span className="badge">{o.status}</span></td>
           <td className="table-td space-x-1">{(NEXT[o.status] ?? []).map((n) => <button key={n} className="btn-outline px-2 py-1 text-xs" onClick={async () => { try { await api.post(`/orders/${o.number}/set_status/`, { status: n }); qc.invalidateQueries({ queryKey: ["admin-orders"] }); } catch (e) { setErr(errMsg(e)); } }}>{n.replaceAll("_", " ")}</button>)}</td></tr>)}</tbody></table></div></div>
   );
@@ -328,7 +328,7 @@ function PaymentsAdmin() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["payments"], queryFn: async () => (await api.get("/payments/")).data });
   if (isLoading) return <Spinner />;
-  return <div className="card overflow-x-auto"><table className="w-full"><thead><tr>{["Ref", "Order", "Provider", "Amount", "Status", ""].map((h) => <th key={h} className="table-th">{h}</th>)}</tr></thead>
+  return <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm overflow-x-auto"><table className="w-full"><thead><tr>{["Ref", "Order", "Provider", "Amount", "Status", ""].map((h) => <th key={h} className="table-th">{h}</th>)}</tr></thead>
     <tbody>{data.map((p: any) => <tr key={p.id} className="border-t"><td className="table-td">{p.reference}</td><td className="table-td">{p.order_number}</td><td className="table-td">{p.provider}</td><td className="table-td">{money(p.amount)}</td><td className="table-td">{p.status}</td>
       <td className="table-td space-x-1">{p.status === "awaiting_verification" && <><button className="btn-primary px-2 py-1 text-xs" onClick={async () => { await api.post(`/payments/${p.id}/verify-transfer/`, { approve: true }); qc.invalidateQueries({ queryKey: ["payments"] }); }}>Approve</button>
         <button className="btn-danger px-2 py-1 text-xs" onClick={async () => { await api.post(`/payments/${p.id}/verify-transfer/`, { approve: false }); qc.invalidateQueries({ queryKey: ["payments"] }); }}>Reject</button></>}
@@ -339,7 +339,7 @@ function RefundsAdmin() {
   const qc = useQueryClient(); const { data, isLoading } = useQuery({ queryKey: ["refunds"], queryFn: async () => (await api.get("/refunds/")).data });
   if (isLoading) return <Spinner />; if (!data.length) return <Empty>No refund requests.</Empty>;
   const decide = async (id: number, d: string) => { try { await api.post(`/refunds/${id}/${d}/`); qc.invalidateQueries({ queryKey: ["refunds"] }); } catch (e) { alert(errMsg(e)); } };
-  return <div className="card divide-y">{data.map((r: any) => <div key={r.id} className="flex items-center justify-between py-2 text-sm"><span>{r.order} · {money(r.amount)} · {r.reason}</span><span className="badge">{r.status}</span>
+  return <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm divide-y">{data.map((r: any) => <div key={r.id} className="flex items-center justify-between py-2 text-sm"><span>{r.order} · {money(r.amount)} · {r.reason}</span><span className="badge">{r.status}</span>
     {r.status === "requested" && <span className="space-x-1"><button className="btn-primary px-2 py-1 text-xs" onClick={() => decide(r.id, "approve")}>Approve</button><button className="btn-outline px-2 py-1 text-xs" onClick={() => decide(r.id, "reject")}>Reject</button></span>}</div>)}</div>;
 }
 
@@ -347,9 +347,9 @@ function DeliveriesAdmin() {
   const qc = useQueryClient(); const { data, isLoading } = useQuery({ queryKey: ["deliveries"], queryFn: async () => (await api.get("/deliveries/")).data.results });
   const staff = useQuery({ queryKey: ["staff-agents"], queryFn: async () => (await api.get("/auth/staff/")).data.results?.filter((u: any) => u.role === "delivery_agent") ?? [], retry: false });
   if (isLoading) return <Spinner />; if (!data.length) return <Empty>No deliveries yet.</Empty>;
-  return <div className="card overflow-x-auto"><table className="w-full"><thead><tr>{["Order", "Status", "Agent", "Assign (agent id)"].map((h) => <th key={h} className="table-th">{h}</th>)}</tr></thead>
+  return <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm overflow-x-auto"><table className="w-full"><thead><tr>{["Order", "Status", "Agent", "Assign (agent id)"].map((h) => <th key={h} className="table-th">{h}</th>)}</tr></thead>
     <tbody>{data.map((d: any) => <tr key={d.id} className="border-t"><td className="table-td">{d.order_number}</td><td className="table-td">{d.status}</td><td className="table-td">{d.agent_email ?? "—"}</td>
-      <td className="table-td"><button className="text-brand" onClick={async () => { const id = prompt(`Agent user id${staff.data?.length ? ` (${staff.data.map((a: any) => `${a.id}:${a.email}`).join(", ")})` : ""}`); if (id) { try { await api.post(`/deliveries/${d.id}/assign/`, { agent: Number(id) }); qc.invalidateQueries({ queryKey: ["deliveries"] }); } catch (e) { alert(errMsg(e)); } } }}>Assign</button></td></tr>)}</tbody></table></div>;
+      <td className="table-td"><button className="text-blue-600" onClick={async () => { const id = prompt(`Agent user id${staff.data?.length ? ` (${staff.data.map((a: any) => `${a.id}:${a.email}`).join(", ")})` : ""}`); if (id) { try { await api.post(`/deliveries/${d.id}/assign/`, { agent: Number(id) }); qc.invalidateQueries({ queryKey: ["deliveries"] }); } catch (e) { alert(errMsg(e)); } } }}>Assign</button></td></tr>)}</tbody></table></div>;
 }
 
 function CouponsAdmin() {
@@ -357,10 +357,10 @@ function CouponsAdmin() {
   const [f, setF] = useState({ code: "", kind: "percent", value: "10", min_purchase: "0" }); const [msg, setMsg] = useState("");
   if (isLoading) return <Spinner />;
   return <div className="space-y-3">{msg && <ErrorBox msg={msg} />}
-    <form className="card grid gap-2 md:grid-cols-5" onSubmit={async (e) => { e.preventDefault(); try { await api.post("/coupons/", { code: f.code, kind: f.kind, value: f.kind === "percent" ? Number(f.value) : toMinor(f.value), min_purchase: toMinor(f.min_purchase) }); qc.invalidateQueries({ queryKey: ["coupons"] }); setMsg(""); } catch (er) { setMsg(errMsg(er)); } }}>
+    <form className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm grid gap-2 md:grid-cols-5" onSubmit={async (e) => { e.preventDefault(); try { await api.post("/coupons/", { code: f.code, kind: f.kind, value: f.kind === "percent" ? Number(f.value) : toMinor(f.value), min_purchase: toMinor(f.min_purchase) }); qc.invalidateQueries({ queryKey: ["coupons"] }); setMsg(""); } catch (er) { setMsg(errMsg(er)); } }}>
       <input required className="input" placeholder="CODE" value={f.code} onChange={(e) => setF({ ...f, code: e.target.value })} /><select className="input" value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })}><option value="percent">Percent</option><option value="fixed">Fixed ₦</option></select>
       <input className="input" placeholder="Value" value={f.value} onChange={(e) => setF({ ...f, value: e.target.value })} /><input className="input" placeholder="Min purchase ₦" value={f.min_purchase} onChange={(e) => setF({ ...f, min_purchase: e.target.value })} /><button className="btn-primary">Create</button></form>
-    <div className="card divide-y">{data.map((c: any) => <div key={c.id} className="flex justify-between py-2 text-sm"><b>{c.code}</b><span>{c.kind === "percent" ? `${c.value}%` : money(c.value)} · used {c.used_count}</span></div>)}</div></div>;
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm divide-y">{data.map((c: any) => <div key={c.id} className="flex justify-between py-2 text-sm"><b>{c.code}</b><span>{c.kind === "percent" ? `${c.value}%` : money(c.value)} · used {c.used_count}</span></div>)}</div></div>;
 }
 
 function FlashAdmin() {
@@ -368,17 +368,17 @@ function FlashAdmin() {
   const [f, setF] = useState({ product: "", sale_price: "", hours: "24", quota: "" }); const [msg, setMsg] = useState("");
   if (isLoading) return <Spinner />;
   return <div className="space-y-3">{msg && <ErrorBox msg={msg} />}
-    <form className="card grid gap-2 md:grid-cols-5" onSubmit={async (e) => { e.preventDefault(); const now = new Date(); try { await api.post("/flash-sales/", { product: Number(f.product), sale_price: toMinor(f.sale_price), starts_at: now.toISOString(), ends_at: new Date(now.getTime() + Number(f.hours) * 36e5).toISOString(), quota: f.quota ? Number(f.quota) : null }); qc.invalidateQueries({ queryKey: ["flash-admin"] }); setMsg(""); } catch (er) { setMsg(errMsg(er)); } }}>
+    <form className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm grid gap-2 md:grid-cols-5" onSubmit={async (e) => { e.preventDefault(); const now = new Date(); try { await api.post("/flash-sales/", { product: Number(f.product), sale_price: toMinor(f.sale_price), starts_at: now.toISOString(), ends_at: new Date(now.getTime() + Number(f.hours) * 36e5).toISOString(), quota: f.quota ? Number(f.quota) : null }); qc.invalidateQueries({ queryKey: ["flash-admin"] }); setMsg(""); } catch (er) { setMsg(errMsg(er)); } }}>
       <input required className="input" placeholder="Product ID" value={f.product} onChange={(e) => setF({ ...f, product: e.target.value })} /><input required className="input" placeholder="Sale price ₦" value={f.sale_price} onChange={(e) => setF({ ...f, sale_price: e.target.value })} />
       <input className="input" placeholder="Duration (hours)" value={f.hours} onChange={(e) => setF({ ...f, hours: e.target.value })} /><input className="input" placeholder="Quota (optional)" value={f.quota} onChange={(e) => setF({ ...f, quota: e.target.value })} /><button className="btn-primary">Start sale</button></form>
-    <div className="card divide-y">{data.map((s: any) => <div key={s.id} className="flex justify-between py-2 text-sm"><span>{s.product_name}</span><span>{money(s.sale_price)} · ends {new Date(s.ends_at).toLocaleString()} · sold {s.sold}{s.quota ? `/${s.quota}` : ""}</span></div>)}</div></div>;
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm divide-y">{data.map((s: any) => <div key={s.id} className="flex justify-between py-2 text-sm"><span>{s.product_name}</span><span>{money(s.sale_price)} · ends {new Date(s.ends_at).toLocaleString()} · sold {s.sold}{s.quota ? `/${s.quota}` : ""}</span></div>)}</div></div>;
 }
 
 function SettingsAdmin() {
   const { data, isLoading } = useQuery({ queryKey: ["settings-admin"], queryFn: async () => (await api.get("/settings/")).data }); const [msg, setMsg] = useState("");
   if (isLoading) return <Spinner />;
   const save = async (patch: any) => { try { await api.patch("/settings/", patch); setMsg("Saved."); } catch (e) { setMsg(errMsg(e)); } };
-  return <div className="card space-y-2 text-sm">{msg && <Success>{msg}</Success>}
+  return <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm space-y-2 text-sm">{msg && <Success>{msg}</Success>}
     {(["bank_name", "bank_account_name", "bank_account_number"] as const).map((k) => <label key={k} className="block">{k.replaceAll("_", " ")}<input className="input" defaultValue={data[k]} onBlur={(e) => save({ [k]: e.target.value })} /></label>)}
     <label className="flex gap-2"><input type="checkbox" defaultChecked={data.cod_enabled} onChange={(e) => save({ cod_enabled: e.target.checked })} /> Cash on delivery enabled</label></div>;
 }
@@ -388,15 +388,15 @@ function StaffAdmin() {
   const [f, setF] = useState({ email: "", password: "", role: "store_admin" }); const [msg, setMsg] = useState("");
   if (isLoading) return <Spinner />;
   return <div className="space-y-3">{msg && <ErrorBox msg={msg} />}
-    <form className="card grid gap-2 md:grid-cols-4" onSubmit={async (e) => { e.preventDefault(); try { await api.post("/auth/staff/", f); qc.invalidateQueries({ queryKey: ["staff"] }); setMsg(""); } catch (er) { setMsg(errMsg(er)); } }}>
+    <form className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm grid gap-2 md:grid-cols-4" onSubmit={async (e) => { e.preventDefault(); try { await api.post("/auth/staff/", f); qc.invalidateQueries({ queryKey: ["staff"] }); setMsg(""); } catch (er) { setMsg(errMsg(er)); } }}>
       <input required type="email" className="input" placeholder="Email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} /><input required type="password" className="input" placeholder="Password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} />
       <select className="input" value={f.role} onChange={(e) => setF({ ...f, role: e.target.value })}>{["store_admin", "delivery_agent", "support_agent", "super_admin"].map((r) => <option key={r}>{r}</option>)}</select><button className="btn-primary">Create account</button></form>
-    <div className="card divide-y">{data.map((u: any) => <div key={u.id} className="flex items-center justify-between py-2 text-sm"><span>#{u.id} {u.email} · {u.role}</span>
-      <button className="text-brand" onClick={async () => { try { await api.post(`/auth/staff/${u.id}/${u.is_active === false ? "enable" : "disable"}/`); qc.invalidateQueries({ queryKey: ["staff"] }); } catch (e) { setMsg(errMsg(e)); } }}>Disable / enable</button></div>)}</div></div>;
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm divide-y">{data.map((u: any) => <div key={u.id} className="flex items-center justify-between py-2 text-sm"><span>#{u.id} {u.email} · {u.role}</span>
+      <button className="text-blue-600" onClick={async () => { try { await api.post(`/auth/staff/${u.id}/${u.is_active === false ? "enable" : "disable"}/`); qc.invalidateQueries({ queryKey: ["staff"] }); } catch (e) { setMsg(errMsg(e)); } }}>Disable / enable</button></div>)}</div></div>;
 }
 
 function AuditAdmin() {
   const { data, isLoading } = useQuery({ queryKey: ["audit"], queryFn: async () => (await api.get("/auth/audit-logs/")).data.results });
   if (isLoading) return <Spinner />;
-  return <div className="card divide-y text-sm">{data.map((a: any) => <div key={a.id} className="py-2">{new Date(a.created_at).toLocaleString()} · {a.actor_email ?? "system"} · <b>{a.action}</b> {a.target_type} {a.target_id}</div>)}</div>;
+  return <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm divide-y text-sm">{data.map((a: any) => <div key={a.id} className="py-2">{new Date(a.created_at).toLocaleString()} · {a.actor_email ?? "system"} · <b>{a.action}</b> {a.target_type} {a.target_id}</div>)}</div>;
 }
