@@ -4,6 +4,11 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+# BD Store admin branding
+admin.site.site_header = "BD Store Administration"
+admin.site.site_title = "BD Store Admin"
+admin.site.index_title = "Store Management Dashboard"
+
 urlpatterns = [
     path("django-admin/", admin.site.urls),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

@@ -1,15 +1,16 @@
+
 from django.db import models
 
 
 class StoreSettings(models.Model):
     """Singleton (pk=1)."""
-    store_name = models.CharField(max_length=100, default="Brainy Dec")
+    store_name = models.CharField(max_length=100, default="BD Store")
     currency = models.CharField(max_length=3, default="NGN")
     enabled_countries = models.JSONField(default=list)  # ["NG"]
     enabled_payment_methods = models.JSONField(default=list)
     cod_enabled = models.BooleanField(default=True)
-    cod_max_amount = models.BigIntegerField(default=20_000_000)  # 200,000 NGN in kobo
-    cod_allowed_states = models.JSONField(default=list, blank=True)  # empty = all enabled states
+    cod_max_amount = models.BigIntegerField(default=20_000_000)
+    cod_allowed_states = models.JSONField(default=list, blank=True)
     default_shipping_fee = models.BigIntegerField(default=150_000)
     free_shipping_threshold = models.BigIntegerField(null=True, blank=True)
     bank_name = models.CharField(max_length=100, blank=True)
@@ -18,9 +19,20 @@ class StoreSettings(models.Model):
 
     @classmethod
     def load(cls):
-        obj, _ = cls.objects.get_or_create(pk=1, defaults=dict(
-            enabled_countries=["NG"],
-            enabled_payment_methods=["paystack", "flutterwave", "bank_transfer", "cod", "wallet"]))
+        obj, _ = cls.objects.get_or_create(
+            pk=1,
+            defaults=dict(
+                store_name="BD Store",
+                enabled_countries=["NG"],
+                enabled_payment_methods=[
+                    "paystack",
+                    "flutterwave",
+                    "bank_transfer",
+                    "cod",
+                    "wallet",
+                ],
+            ),
+        )
         return obj
 
 

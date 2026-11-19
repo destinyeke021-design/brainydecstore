@@ -99,7 +99,7 @@ class OrderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.Ge
         c = canvas.Canvas(buf, pagesize=A4)
         w, h = A4
         y = h - 60
-        c.setFont("Helvetica-Bold", 18); c.drawString(50, y, "BRAINY DEC"); y -= 22
+        c.setFont("Helvetica-Bold", 18); c.drawString(50, y, "BD Store"); y -= 22
         c.setFont("Helvetica", 11)
         c.drawString(50, y, f"{'Receipt' if order.is_paid else 'Invoice'} for order {order.number}"); y -= 16
         c.drawString(50, y, f"Date: {order.created_at:%Y-%m-%d}   Status: {order.get_status_display()}"); y -= 16

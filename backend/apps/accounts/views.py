@@ -1,3 +1,4 @@
+
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.conf import settings
@@ -35,10 +36,25 @@ class RegisterView(generics.CreateAPIView):
         s = self.get_serializer(data=request.data)
         s.is_valid(raise_exception=True)
         user = s.save()
+
         try:
-            send_mail("Welcome to Brainy Dec", "Your account has been created.", None, [user.email])
+            send_mail(
+                "Welcome to BD Store!",
+                (
+                    f"Hello {user.first_name or 'there'},\n\n"
+                    "Welcome to BD Store!\n\n"
+                    "Your account has been created successfully. "
+                    "You can now sign in, explore our products and place orders.\n\n"
+                    "Thank you for choosing BD Store.\n\n"
+                    "Happy shopping!\n"
+                    "BD Store Team"
+                ),
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+            )
         except Exception:
             pass
+
         return Response(UserSerializer(user).data, status=201)
 
 
@@ -47,7 +63,7 @@ class LogoutView(APIView):
         try:
             RefreshToken(request.data.get("refresh")).blacklist()
         except Exception:
-            pass  # stateless JWT: client discards tokens; blacklist app can be enabled for server-side revocation
+            pass
         return Response(status=204)
 
 
@@ -64,13 +80,31 @@ class PasswordResetRequestView(APIView):
     throttle_scope = "auth"
 
     def post(self, request):
-        user = User.objects.filter(email__iexact=request.data.get("email", "")).first()
+        user = User.objects.filter(
+            email__iexact=request.data.get("email", "")
+        ).first()
+
         if user:
             uid = urlsafe_base64_encode(force_bytes(user.pk))
             token = default_token_generator.make_token(user)
             link = f"{settings.FRONTEND_URL}/reset-password/{uid}/{token}"
-            send_mail("Reset your Brainy Dec password", f"Reset link: {link}", None, [user.email])
-        return Response({"detail": "If the email exists, a reset link has been sent."})  # no account enumeration
+
+            send_mail(
+                "Reset your BD Store password",
+                (
+                    "Hello,\n\n"
+                    "We received a request to reset your BD Store password.\n\n"
+                    f"Use the link below to reset your password:\n{link}\n\n"
+                    "If you did not request this change, you can ignore this email.\n\n"
+                    "BD Store Team"
+                ),
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+            )
+
+        return Response({
+            "detail": "If the email exists, a reset link has been sent."
+        })
 
 
 class PasswordResetConfirmView(APIView):
@@ -78,19 +112,29 @@ class PasswordResetConfirmView(APIView):
 
     def post(self, request):
         try:
-            user = User.objects.get(pk=force_str(urlsafe_base64_decode(request.data.get("uid", ""))))
+            user = User.objects.get(
+                pk=force_str(urlsafe_base64_decode(request.data.get("uid", "")))
+            )
         except Exception:
             return Response({"detail": "Invalid link."}, status=400)
-        if not default_token_generator.check_token(user, request.data.get("token", "")):
+
+        if not default_token_generator.check_token(
+            user, request.data.get("token", "")
+        ):
             return Response({"detail": "Invalid or expired link."}, status=400)
+
         pw = request.data.get("password", "")
+
         from django.core.exceptions import ValidationError as DjangoVE
+
         try:
             validate_password(pw, user)
         except DjangoVE as e:
             return Response({"password": list(e.messages)}, status=400)
+
         user.set_password(pw)
         user.save()
+
         return Response({"detail": "Password updated."})
 
 
@@ -121,7 +165,10 @@ class StaffViewSet(viewsets.ModelViewSet):
     def _toggle(request, pk, active):
         u = User.objects.exclude(role=Role.CUSTOMER).get(pk=pk)
         if u.role == Role.SUPER_ADMIN and u.pk != request.user.pk:
-            return Response({"detail": "Cannot modify another super administrator."}, status=403)
+            return Response(
+                {"detail": "Cannot modify another super administrator."},
+                status=403,
+            )
         u.is_active = active
         u.save(update_fields=["is_active"])
         audit(request, "staff.enable" if active else "staff.disable", u)
@@ -149,11 +196,14 @@ class AuditLogView(generics.ListAPIView):
 
     def get_serializer_class(self):
         from rest_framework import serializers
+
         class S(serializers.ModelSerializer):
             actor_email = serializers.EmailField(source="actor.email", default=None)
+
             class Meta:
                 model = AuditLog
                 fields = "__all__"
+
         return S
 
     queryset = AuditLog.objects.select_related("actor")

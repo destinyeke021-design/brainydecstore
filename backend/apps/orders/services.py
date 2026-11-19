@@ -53,7 +53,7 @@ def transition(order, new_status, user=None, note=""):
     elif new == OrderStatus.OUT_FOR_DELIVERY:
         notify(order.user, f"Order {order.number} out for delivery", "Your delivery agent is on the way.", sms=True)
     elif new == OrderStatus.DELIVERED:
-        notify(order.user, f"Order {order.number} delivered", "Thank you for shopping with Brainy Dec.", sms=True)
+        notify(order.user, f"Order {order.number} delivered", "Thank you for shopping with BD Store.", sms=True)
     elif new in (OrderStatus.CANCELLED, OrderStatus.REFUNDED):
         notify(order.user, f"Order {order.number} {new.label.lower()}", note)
     return order
