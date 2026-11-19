@@ -47,35 +47,268 @@ function Dashboard() {
 }
 
 function ProductsAdmin() {
-  const qc = useQueryClient(); const [msg, setMsg] = useState("");
-  const { data, isLoading } = useQuery({ queryKey: ["admin-products"], queryFn: async () => (await api.get("/products/")).data.results });
-  const cats = useQuery({ queryKey: ["categories"], queryFn: async () => (await api.get("/categories/")).data });
-  const [f, setF] = useState({ name: "", sku: "", category: "", regular_price: "", stock_quantity: "0" });
-  const create = async (e: React.FormEvent) => { e.preventDefault(); try { await api.post("/products/", { ...f, category: Number(f.category), regular_price: toMinor(f.regular_price), stock_quantity: Number(f.stock_quantity) }); setMsg("Created."); qc.invalidateQueries({ queryKey: ["admin-products"] }); } catch (er) { setMsg(errMsg(er)); } };
-  const upload = async (slug: string, file: File) => { const fd = new FormData(); fd.append("image", file); try { await api.post(`/products/${slug}/images/`, fd); setMsg("Image uploaded."); qc.invalidateQueries({ queryKey: ["admin-products"] }); } catch (er) { setMsg(errMsg(er)); } };
-  const csv = async (file: File) => { const fd = new FormData(); fd.append("file", file); try { const r = await api.post("/products/import/", fd); setMsg(`Imported: ${r.data.created} new, ${r.data.updated} updated`); qc.invalidateQueries({ queryKey: ["admin-products"] }); } catch (er) { setMsg(errMsg(er)); } };
+  const qc = useQueryClient();
+  const [msg, setMsg] = useState("");
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-products"],
+    queryFn: async () => (await api.get("/products/")).data.results,
+  });
+
+  const cats = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => (await api.get("/categories/")).data,
+  });
+
+  const [f, setF] = useState({
+    name: "",
+    sku: "",
+    category: "",
+    regular_price: "",
+    stock_quantity: "0",
+  });
+
+  const create = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      await api.post("/products/", {
+        ...f,
+        category: Number(f.category),
+        regular_price: toMinor(f.regular_price),
+        stock_quantity: Number(f.stock_quantity),
+      });
+
+      setMsg("Product created successfully.");
+      qc.invalidateQueries({ queryKey: ["admin-products"] });
+      qc.invalidateQueries({ queryKey: ["dash"] });
+    } catch (er) {
+      setMsg(errMsg(er));
+    }
+  };
+
+  const upload = async (slug: string, file: File) => {
+    const fd = new FormData();
+    fd.append("image", file);
+
+    try {
+      await api.post(`/products/${slug}/images/`, fd);
+      setMsg("Image uploaded successfully.");
+      qc.invalidateQueries({ queryKey: ["admin-products"] });
+    } catch (er) {
+      setMsg(errMsg(er));
+    }
+  };
+
+  const csv = async (file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+
+    try {
+      const r = await api.post("/products/import/", fd);
+      setMsg(`Imported: ${r.data.created} new, ${r.data.updated} updated`);
+      qc.invalidateQueries({ queryKey: ["admin-products"] });
+    } catch (er) {
+      setMsg(errMsg(er));
+    }
+  };
+
   if (isLoading) return <Spinner />;
+
   return (
     <div className="space-y-4">
       {msg && <Success>{msg}</Success>}
+
       <form onSubmit={create} className="card grid gap-2 md:grid-cols-6">
-        <input required className="input md:col-span-2" placeholder="Name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
-        <input required className="input" placeholder="SKU" value={f.sku} onChange={(e) => setF({ ...f, sku: e.target.value })} />
-        <select required className="input" value={f.category} onChange={(e) => setF({ ...f, category: e.target.value })}><option value="">Category</option>{(cats.data ?? []).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
-        <input required className="input" type="number" step="0.01" placeholder="Price ₦" value={f.regular_price} onChange={(e) => setF({ ...f, regular_price: e.target.value })} />
-        <input className="input" type="number" placeholder="Stock" value={f.stock_quantity} onChange={(e) => setF({ ...f, stock_quantity: e.target.value })} />
-        <button className="btn-primary md:col-span-6">Add product</button></form>
-      <div className="flex gap-2"><label className="btn-outline cursor-pointer">Import CSV/XLSX<input type="file" hidden accept=".csv,.xlsx" onChange={(e) => e.target.files?.[0] && csv(e.target.files[0])} /></label>
-        <button className="btn-outline" onClick={async () => { const r = await api.get("/products/export/", { responseType: "blob" }); const a = document.createElement("a"); a.href = URL.createObjectURL(r.data); a.download = "products.csv"; a.click(); }}>Export CSV</button></div>
-      <div className="card overflow-x-auto"><table className="w-full"><thead><tr><th className="table-th">Name</th><th className="table-th">SKU</th><th className="table-th">Price</th><th className="table-th">Stock</th><th className="table-th">Status</th><th className="table-th">Actions</th></tr></thead>
-        <tbody>{data.map((p: any) => <tr key={p.id} className="border-t"><td className="table-td">{p.name}</td><td className="table-td">{p.sku}</td><td className="table-td">{money(p.regular_price)}</td>
-          <td className="table-td">{p.stock_quantity}{p.stock_quantity <= p.low_stock_threshold && <span className="badge ml-1 bg-amber-100">low</span>}</td><td className="table-td">{p.status}</td>
-          <td className="table-td space-x-2"><button className="text-brand" onClick={async () => { const q = prompt("Stock change (+/-)"); if (q) { try { await api.post(`/products/${p.slug}/adjust_stock/`, { quantity: Number(q) }); qc.invalidateQueries({ queryKey: ["admin-products"] }); } catch (e) { setMsg(errMsg(e)); } } }}>Stock</button>
-            <label className="cursor-pointer text-brand">Image<input hidden type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && upload(p.slug, e.target.files[0])} /></label>
-            <button className="text-red-600" onClick={async () => { if (confirm("Archive product?")) { await api.delete(`/products/${p.slug}/`); qc.invalidateQueries({ queryKey: ["admin-products"] }); } }}>Archive</button></td></tr>)}</tbody></table></div>
+        <input
+          required
+          className="input md:col-span-2"
+          placeholder="Name"
+          value={f.name}
+          onChange={(e) => setF({ ...f, name: e.target.value })}
+        />
+
+        <input
+          required
+          className="input"
+          placeholder="SKU"
+          value={f.sku}
+          onChange={(e) => setF({ ...f, sku: e.target.value })}
+        />
+
+        <select
+          required
+          className="input"
+          value={f.category}
+          onChange={(e) => setF({ ...f, category: e.target.value })}
+        >
+          <option value="">Category</option>
+          {(cats.data ?? []).map((c: any) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+
+        <input
+          required
+          className="input"
+          type="number"
+          step="0.01"
+          placeholder="Price ₦"
+          value={f.regular_price}
+          onChange={(e) => setF({ ...f, regular_price: e.target.value })}
+        />
+
+        <input
+          className="input"
+          type="number"
+          placeholder="Stock"
+          value={f.stock_quantity}
+          onChange={(e) => setF({ ...f, stock_quantity: e.target.value })}
+        />
+
+        <button className="btn-primary md:col-span-6">
+          Add product
+        </button>
+      </form>
+
+      <div className="flex gap-2">
+        <label className="btn-outline cursor-pointer">
+          Import CSV/XLSX
+          <input
+            type="file"
+            hidden
+            accept=".csv,.xlsx"
+            onChange={(e) =>
+              e.target.files?.[0] && csv(e.target.files[0])
+            }
+          />
+        </label>
+
+        <button
+          className="btn-outline"
+          onClick={async () => {
+            try {
+              const r = await api.get("/products/export/", {
+                responseType: "blob",
+              });
+
+              const a = document.createElement("a");
+              a.href = URL.createObjectURL(r.data);
+              a.download = "products.csv";
+              a.click();
+              URL.revokeObjectURL(a.href);
+            } catch (e) {
+              setMsg(errMsg(e));
+            }
+          }}
+        >
+          Export CSV
+        </button>
+      </div>
+
+      <div className="card overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr>
+              <th className="table-th">Name</th>
+              <th className="table-th">SKU</th>
+              <th className="table-th">Price</th>
+              <th className="table-th">Stock</th>
+              <th className="table-th">Status</th>
+              <th className="table-th">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {data.map((p: any) => (
+              <tr key={p.id} className="border-t">
+                <td className="table-td">{p.name}</td>
+                <td className="table-td">{p.sku}</td>
+                <td className="table-td">{money(p.regular_price)}</td>
+                <td className="table-td">
+                  {p.stock_quantity}
+                  {p.stock_quantity <= p.low_stock_threshold && (
+                    <span className="badge ml-1 bg-amber-100">low</span>
+                  )}
+                </td>
+                <td className="table-td">{p.status}</td>
+
+                <td className="table-td space-x-2">
+                  <button
+                    className="text-brand"
+                    onClick={async () => {
+                      const q = prompt("Stock change (+/-)");
+                      if (!q) return;
+
+                      try {
+                        await api.post(
+                          `/products/${p.slug}/adjust_stock/`,
+                          { quantity: Number(q) }
+                        );
+                        qc.invalidateQueries({ queryKey: ["admin-products"] });
+                      } catch (e) {
+                        setMsg(errMsg(e));
+                      }
+                    }}
+                  >
+                    Stock
+                  </button>
+
+                  <label className="cursor-pointer text-brand">
+                    Image
+                    <input
+                      hidden
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) upload(p.slug, file);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+
+                  <button
+                    className="font-medium text-red-600"
+                    onClick={async () => {
+                      const confirmed = confirm(
+                        `Delete "${p.name}"?\n\nProducts with existing orders will be archived instead. Products without order history will be permanently deleted.`
+                      );
+
+                      if (!confirmed) return;
+
+                      try {
+                        const response = await api.delete(
+                          `/products/${p.slug}/`
+                        );
+
+                        setMsg(
+                          response.data?.detail ||
+                            "Product deletion completed."
+                        );
+
+                        qc.invalidateQueries({
+                          queryKey: ["admin-products"],
+                        });
+                        qc.invalidateQueries({ queryKey: ["dash"] });
+                      } catch (error) {
+                        setMsg(errMsg(error));
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
-}
+}    
 
 const NEXT: Record<string, string[]> = { confirmed: ["processing"], processing: ["ready_for_dispatch"], ready_for_dispatch: ["shipped"], shipped: ["out_for_delivery", "delivered"], out_for_delivery: ["delivered"] };
 function OrdersAdmin() {

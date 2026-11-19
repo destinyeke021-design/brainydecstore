@@ -1,5 +1,7 @@
+
 from django.db import models
 from django.utils import timezone
+from django.core.validators import MinValueValidator
 
 
 class Coupon(models.Model):
@@ -25,14 +27,13 @@ class Coupon(models.Model):
         super().save(*a, **kw)
 
     def evaluate(self, subtotal, user, now=None):
-        """Returns (discount_minor, free_delivery). Raises ValueError with a customer-safe message."""
         now = now or timezone.now()
         if not self.is_active or self.starts_at > now or (self.ends_at and self.ends_at <= now):
             raise ValueError("This coupon is not currently valid.")
         if self.max_uses is not None and self.used_count >= self.max_uses:
             raise ValueError("This coupon has reached its usage limit.")
         if subtotal < self.min_purchase:
-            raise ValueError(f"Minimum purchase not met.")
+            raise ValueError("Minimum purchase not met.")
         if user and user.is_authenticated and self.redemptions.filter(user=user).count() >= self.per_user_limit:
             raise ValueError("You have already used this coupon.")
         d = subtotal * self.value // 100 if self.kind == self.Kind.PERCENT else self.value
@@ -59,7 +60,12 @@ class FlashSale(models.Model):
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        constraints = [models.CheckConstraint(check=models.Q(ends_at__gt=models.F("starts_at")), name="flash_end_after_start")]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(ends_at__gt=models.F("starts_at")),
+                name="flash_end_after_start",
+            )
+        ]
 
 
 class Banner(models.Model):
@@ -81,3 +87,78 @@ class Bundle(models.Model):
     products = models.ManyToManyField("catalog.Product", related_name="bundles")
     bundle_price = models.BigIntegerField()
     is_active = models.BooleanField(default=True)
+
+
+class SponsoredAd(models.Model):
+    class PaymentStatus(models.TextChoices):
+        PENDING = "pending", "Awaiting payment"
+        PAID = "paid", "Paid"
+
+    class ApprovalStatus(models.TextChoices):
+        PENDING = "pending", "Awaiting review"
+        APPROVED = "approved", "Approved"
+        REJECTED = "rejected", "Rejected"
+
+    class Placement(models.TextChoices):
+        HOMEPAGE = "homepage", "Homepage"
+
+    advertiser_name = models.CharField(max_length=150)
+    contact_name = models.CharField(max_length=150, blank=True)
+    contact_email = models.EmailField(blank=True)
+    contact_phone = models.CharField(max_length=30, blank=True)
+
+    title = models.CharField(max_length=150)
+    description = models.CharField(max_length=300, blank=True)
+    image = models.ImageField(upload_to="sponsored_ads/")
+    destination_url = models.URLField(max_length=500, blank=True)
+    placement = models.CharField(
+        max_length=30,
+        choices=Placement.choices,
+        default=Placement.HOMEPAGE,
+    )
+
+    price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        help_text="Advertising price in Nigerian naira (NGN).",
+    )
+    payment_status = models.CharField(
+        max_length=10,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.PENDING,
+    )
+    payment_reference = models.CharField(max_length=150, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    approval_status = models.CharField(
+        max_length=10,
+        choices=ApprovalStatus.choices,
+        default=ApprovalStatus.PENDING,
+    )
+    admin_notes = models.TextField(blank=True)
+
+    starts_at = models.DateTimeField(default=timezone.now)
+    ends_at = models.DateTimeField()
+    is_active = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Sponsored advertisement"
+        verbose_name_plural = "Sponsored advertisements"
+
+    def __str__(self):
+        return f"{self.advertiser_name} - {self.title}"
+
+    @property
+    def is_running(self):
+        now = timezone.now()
+        return (
+            self.is_active
+            and self.payment_status == self.PaymentStatus.PAID
+            and self.approval_status == self.ApprovalStatus.APPROVED
+            and self.starts_at <= now < self.ends_at
+        )

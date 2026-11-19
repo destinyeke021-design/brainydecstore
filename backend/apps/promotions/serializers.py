@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Banner, Bundle, Coupon, FlashSale
-
+from .models import Banner, Bundle, Coupon, FlashSale, SponsoredAd
 
 class CouponSerializer(serializers.ModelSerializer):
     class Meta:
@@ -42,3 +42,18 @@ class BundleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bundle
         fields = "__all__"
+class SponsoredAdSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SponsoredAd
+        fields = [
+            "id",
+            "advertiser_name",
+            "title",
+            "description",
+            "image",
+            "destination_url",
+            "placement",
+            "starts_at",
+            "ends_at",
+        ]
+        read_only_fields = fields
